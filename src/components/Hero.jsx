@@ -2,12 +2,105 @@
 import { useNavigate } from 'react-router-dom';
 import { useRef, useState, useEffect } from 'react';
 import profilePic from '../assets/raaz.png';
-import portfolio from '../assets/raj_making_portfolio.pdf';
+import secondPic from '../assets/raaz2.JPG';
+import thirdPic from '../assets/raaz.JPEG';
+import portfolio from '../assets/RoCV.pdf';
 
 const Hero = () => {
   const navigate = useNavigate();
   const heroRef = useRef(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  
+  // Draggable Photo Deck State
+  const photos = [profilePic, secondPic, thirdPic];
+  const [cardOrder, setCardOrder] = useState([0, 1, 2]); // Top card is last in array
+  const [dragState, setDragState] = useState({ isDragging: false, startX: 0, startY: 0, x: 0, y: 0 });
+  const [snapBack, setSnapBack] = useState(null);
+  const deckRef = useRef(null);
+
+  // Auto-shuffle Logic
+  useEffect(() => {
+    // Only auto-shuffle if we are not actively dragging
+    if (dragState.isDragging) return;
+
+    const shuffleInterval = setInterval(() => {
+      // Simulate fling animation to the left
+      setSnapBack({ x: -250, y: 40 });
+      
+      setTimeout(() => {
+        setCardOrder(prev => {
+          const newOrder = [...prev];
+          const topCard = newOrder.pop();
+          newOrder.unshift(topCard);
+          return newOrder;
+        });
+        setSnapBack({ x: 0, y: 0 }); // reset position at the back
+      }, 300);
+    }, 3000); // Shuffle every 2 seconds
+
+    return () => clearInterval(shuffleInterval);
+  }, [dragState.isDragging]);
+
+  // Deck Drag Logic
+  const handlePointerDown = (e, orderPos) => {
+    if (orderPos !== cardOrder.length - 1) return;
+    
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragState({
+      isDragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      x: 0, y: 0,
+      pointerId: e.pointerId
+    });
+    setSnapBack(null);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!dragState.isDragging || e.pointerId !== dragState.pointerId) return;
+    
+    setDragState(prev => ({
+      ...prev,
+      x: e.clientX - prev.startX,
+      y: e.clientY - prev.startY
+    }));
+  };
+
+  const handlePointerUp = (e) => {
+    if (!dragState.isDragging || e.pointerId !== dragState.pointerId) return;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+
+    const threshold = 100;
+    if (Math.abs(dragState.x) > threshold || Math.abs(dragState.y) > threshold) {
+      // Fling card to back
+      const flingX = dragState.x * 2;
+      const flingY = dragState.y * 2;
+      
+      setSnapBack({ x: flingX, y: flingY });
+      
+      setTimeout(() => {
+        setCardOrder(prev => {
+          const newOrder = [...prev];
+          const topCard = newOrder.pop();
+          newOrder.unshift(topCard);
+          return newOrder;
+        });
+        setSnapBack({ x: 0, y: 0 }); // reset position at the back
+        setDragState({ isDragging: false, startX: 0, startY: 0, x: 0, y: 0, pointerId: null });
+      }, 300);
+      
+    } else {
+      // Snap back to top
+      setSnapBack({ x: dragState.x, y: dragState.y });
+      requestAnimationFrame(() => {
+        setSnapBack({ x: 0, y: 0 });
+      });
+      setTimeout(() => {
+        setDragState({ isDragging: false, startX: 0, startY: 0, x: 0, y: 0, pointerId: null });
+        setSnapBack(null);
+      }, 300);
+    }
+  };
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -270,19 +363,19 @@ const Hero = () => {
   <div className="w-full lg:w-1/2 space-y-6">
     <div className="text-left space-y-4">
       {/* Greeting badge */}
-      <div className="inline-flex items-center px-4 py-2 bg-pink-100/80 dark:bg-pink-900/30 backdrop-blur-sm rounded-full border border-pink-200/50 dark:border-pink-700/50 mb-4">
-        <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse mr-2"></div>
-        <span className="text-sm font-medium text-pink-700 dark:text-pink-300">
-          Available for work
+      <div className="inline-flex items-center px-4 py-2 bg-indigo-100/80 dark:bg-indigo-900/30 backdrop-blur-sm rounded-full border border-indigo-200/50 dark:border-indigo-700/50 mb-4">
+        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse mr-2"></div>
+        <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
+          Building the Future
         </span>
       </div>
 
-      <h1 className="text-3xl lg:text-5xl font-bold mb-6 text-gray-900 dark:text-white transition-colors relative">
+      <h1 className="text-3xl lg:text-5xl font-extrabold mb-6 text-gray-900 dark:text-white transition-colors relative tracking-tighter">
         <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-pink-600 to-gray-900 dark:from-white dark:via-pink-400 dark:to-white animate-gradient-text">
           Hi, I'm
         </span>{' '}
-        <span className="text-pink-600 dark:text-pink-400 relative inline-block font-black tracking-tight">
-          <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-600 to-pink-500 animate-gradient-text ">
+        <span className="text-pink-600 dark:text-pink-400 relative inline-block font-black tracking-tight" style={{ paddingBottom: '0.2em' }}>
+          <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-600 to-pink-500 animate-gradient-text pb-2">
             Raj
           </span>
           {/* Animated underline */}
@@ -290,24 +383,18 @@ const Hero = () => {
         </span>
       </h1>
 
-      <h2 className="text-2xl lg:text-3xl font-bold mb-4 text-gray-700 dark:text-gray-300 relative">
-        <span className="bg-gradient-to-r from-gray-700 via-pink-600 to-purple-600 dark:from-gray-300 dark:via-pink-400 dark:to-purple-400 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto] font-extrabold tracking-wide">
-          Full stack Developer & UI Designer
-        </span>
-      </h2> 
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg relative">
-                <span className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-gray-600 to-gray-800 dark:from-gray-400 dark:to-gray-200">
-                  I build exceptional digital experiences with modern technologies.
-                </span>
-                {' '}Passionate about creating{' '}
-                <span className="text-pink-600 dark:text-pink-400 font-semibold relative">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 font-bold">
-                    intuitive interfaces
-                  </span>
-                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-pink-300 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-                </span>
-                {' '}and solving complex problems with elegant solutions.
-              </p>
+              <div className="space-y-4 text-lg text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                <p>
+                  I craft software that works as hard as I do — caffeine and code turned into solutions.
+                </p>
+                <p>
+                  <strong className="text-gray-900 dark:text-white">Full-Stack development</strong>, a dash of <strong className="text-gray-900 dark:text-white">UI Design</strong>, 
+                  and a commitment to progress both in code and in the gym.
+                </p>
+                <p>
+                  Sleep is part of the stack too 😴 — because balance is everything.
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-8">
@@ -344,75 +431,89 @@ const Hero = () => {
             </div>
 
             {/* Quick stats */}
-            <div className="flex items-center gap-6 pt-6 border-t border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-8 pt-6 border-t border-gray-200/50 dark:border-gray-700/50">
               <div className="text-center">
-                <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">50+</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Projects</div>
+                <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">10+</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Projects Built</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">5+</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Technologies</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">2+</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Years Exp</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Years Learning</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">100%</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Satisfied</div>
+                <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">∞</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Curiosity</div>
               </div>
             </div>
           </div>
 
-          <div className="lg:w-1/2 flex justify-center lg:justify-end">
-            <div className="relative">
-              {/* Floating elements around image */}
-              <div className="absolute -top-6 -left-6 w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-2xl backdrop-blur-sm border border-pink-200/50 dark:border-pink-700/50 flex items-center justify-center animate-float shadow-lg">
-                <svg className="w-6 h-6 text-pink-600 dark:text-pink-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 0l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 0z"/>
-                </svg>
-              </div>
-              
-              <div className="absolute -top-4 -right-8 w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl backdrop-blur-sm border border-purple-200/50 dark:border-purple-700/50 flex items-center justify-center animate-bounce shadow-lg" style={{ animationDelay: '0.5s' }}>
-                <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.5 0 3-.33 4.32-.94L16 21v-9h5c0-5.52-4.48-10-10-10z"/>
-                </svg>
-              </div>
-              
-              <div className="absolute -bottom-8 -left-4 w-14 h-14 bg-pink-100 dark:bg-pink-900/30 rounded-full backdrop-blur-sm border border-pink-200/50 dark:border-pink-700/50 flex items-center justify-center animate-pulse shadow-lg">
-                <svg className="w-7 h-7 text-pink-600 dark:text-pink-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </div>
+          {/* Right side: Draggable Photo Deck */}
+          <div 
+            className="lg:w-1/2 flex justify-center lg:justify-end py-10"
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+          >
+            <div className="relative w-72 h-96 lg:w-80 lg:h-[26rem] flex-shrink-0" ref={deckRef}>
+                {cardOrder.map((photoIdx, orderPos) => {
+                  const isTop = orderPos === cardOrder.length - 1;
+                  const stackOffset = orderPos - (cardOrder.length - 1);
+                  const isDraggingThis = dragState.isDragging && isTop;
 
-              {/* Main profile image with enhanced effects */}
-              <div className="group relative w-72 h-72 md:w-80 md:h-80 mr-24 mt-12">
-                {/* Rotating border */}
-                <div className="absolute inset-2 rounded-full bg-gradient-to-r from-pink-400 via-purple-600 to-pink-500 p-1 animate-spin-slow">
-                  <div className="w-full h-full rounded-full bg-white dark:bg-gray-900"></div>
-                </div>
-                
-                {/* Glowing ring */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-400/20 to-purple-600/20 blur-xl animate-pulse"></div>
-                
-                {/* Image container */}
-                <div className="absolute inset-4 rounded-full overflow-hidden shadow-2xl group-hover:shadow-3xl transition-all duration-500 group-hover:scale-105">
-                  <img 
-                    src={profilePic} 
-                    alt="Raj" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  
-                  {/* Overlay effects */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-pink-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  {/* Shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                </div>
+                  let tx = 0, ty = 0, rot = 0;
+                  if (isDraggingThis) {
+                    if (snapBack) {
+                      tx = snapBack.x;
+                      ty = snapBack.y;
+                    } else {
+                      tx = dragState.x;
+                      ty = dragState.y;
+                    }
+                    rot = tx * 0.08;
+                  } else {
+                    tx = 0;
+                    ty = stackOffset * 12;
+                    rot = stackOffset * 5;
+                  }
 
-                {/* Status indicator */}
-                <div className="absolute bottom-6 right-6 flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-3 py-2 rounded-full shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Online</span>
+                  const scale = isTop ? 1 : 1 + stackOffset * 0.04;
+
+                  return (
+                    <div
+                      key={photoIdx}
+                      onPointerDown={(e) => handlePointerDown(e, orderPos)}
+                      className={`absolute inset-0 touch-none select-none ${
+                        isDraggingThis && !snapBack ? 'cursor-grabbing' : isTop ? 'cursor-grab' : 'cursor-default'
+                      } ${isDraggingThis && snapBack ? 'transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]' : isDraggingThis ? '' : 'transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]'}`}
+                      style={{
+                        transform: `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${scale})`,
+                        zIndex: orderPos + 1,
+                        opacity: snapBack && isDraggingThis && snapBack.x !== 0 ? 0 : 1,
+                      }}
+                    >
+                      <div className={`w-full h-full rounded-3xl overflow-hidden border-2 shadow-2xl ${
+                        isTop ? 'border-pink-500/60 shadow-pink-500/30' : 'border-white/20 dark:border-gray-600/30'
+                      } ${isDraggingThis ? 'shadow-3xl shadow-black/40' : 'hover:-translate-y-2 hover:shadow-3xl hover:border-pink-400 transition-all duration-300'}`}>
+                        <img
+                          src={photos[photoIdx]}
+                          alt={`Raj ${photoIdx + 1}`}
+                          className="w-full h-full object-cover pointer-events-none"
+                          draggable={false}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* Hint text below deck */}
+                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-sm text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap flex items-center gap-2 bg-white/30 dark:bg-black/30 backdrop-blur-md px-4 py-1.5 rounded-full border border-gray-200/50 dark:border-gray-700/50 shadow-sm pointer-events-none">
+                  <svg className="w-4 h-4 animate-bounce text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>
+                  Drag to shuffle
                 </div>
               </div>
-            </div>
           </div>
         </div>
 
@@ -471,54 +572,62 @@ const Hero = () => {
               </div>
             </div>
 
-            {/* Tech Stack Section - Glass Container with Flowing SVGs */}
-            <div className="group bg-white/10 dark:bg-gray-800/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20 dark:border-gray-700/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] hover:bg-white/15 dark:hover:bg-gray-800/15 relative overflow-hidden">
+            {/* My Secret Sauce - Infinite Marquee Tech Stack */}
+            <div className="group bg-white/10 dark:bg-gray-800/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20 dark:border-gray-700/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:bg-white/15 dark:hover:bg-gray-800/15 relative overflow-hidden">
               {/* Glass shine effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -translate-x-full group-hover:translate-x-full animate-pulse" />
               
               <div className="flex items-center gap-4 mb-6 group/header">
                 <div className="w-12 h-12 bg-gradient-to-br from-pink-400/20 to-purple-600/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg group-hover/header:shadow-xl transition-all duration-300 group-hover/header:scale-110 border border-pink-300/30">
                   <svg className="w-6 h-6 text-pink-600 dark:text-pink-400 group-hover/header:text-purple-500 transition-colors duration-300" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover/header:text-pink-600 dark:group-hover/header:text-pink-400 transition-colors duration-300">Tech Stack</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Exploring today's tech</p>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover/header:text-pink-600 dark:group-hover/header:text-pink-400 transition-colors duration-300">My Secret Sauce</h3>
+                  <p className="text-gray-600 dark:text-gray-400">Technologies I work with</p>
                 </div>
               </div>
 
-              {/* Flowing Tech Stack Grid */}
-              <div className="relative">
-                {/* Flowing background animation */}
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-100/10 via-transparent to-purple-100/10 animate-pulse rounded-2xl" />
-                
-                <div className="grid grid-cols-5 gap-3 relative z-10">
-                  {techStack.map((tech, index) => (
+              {/* Row 1 - scrolls left */}
+              <div className="marquee-container mb-3">
+                <div className="marquee-track marquee-left">
+                  {[...techStack, ...techStack].map((tech, index) => (
                     <div
-                      key={tech.name}
-                      className={`group/tech relative w-16 h-16 bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-xl border border-white/30 dark:border-gray-600/30 flex items-center justify-center transition-all duration-500 hover:scale-125 hover:shadow-2xl hover:-translate-y-3 hover:rotate-6 cursor-pointer overflow-hidden ${tech.color}`}
-                      style={{
-                        animationDelay: `${index * 50}ms`,
-                      }}
+                      key={`r1-${index}`}
+                      className={`group/tech relative flex-shrink-0 w-16 h-16 bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-xl border border-white/30 dark:border-gray-600/30 flex items-center justify-center transition-all duration-300 hover:scale-125 hover:shadow-2xl hover:-translate-y-3 cursor-pointer overflow-visible mx-2 ${tech.color}`}
                     >
                       <div className="transform group-hover/tech:scale-110 transition-all duration-500 relative z-10">
                         {tech.icon}
                       </div>
-                      
-                      {/* Tooltip */}
-                      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover/tech:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-lg z-20 group-hover/tech:-translate-y-1 border border-gray-600/20">
+                      {/* Name tooltip on hover */}
+                      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-lg opacity-0 group-hover/tech:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-lg z-30 border border-gray-600/20">
                         {tech.name}
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/90 dark:border-t-gray-700/90"></div>
                       </div>
-                      
-                      {/* Glowing effect */}
                       <div className="absolute inset-0 rounded-xl opacity-0 group-hover/tech:opacity-60 transition-opacity duration-500 bg-gradient-to-br from-white/50 via-transparent to-transparent" />
-                      
-                      {/* Shine effect */}
-                      <div className="absolute inset-0 rounded-xl opacity-0 group-hover/tech:opacity-80 transition-all duration-700 bg-gradient-to-r from-transparent via-white/40 to-transparent transform -translate-x-full group-hover/tech:translate-x-full" />
-                      
-                      {/* Floating particles effect */}
+                      <div className="absolute inset-0 opacity-0 group-hover/tech:opacity-100 transition-opacity duration-500">
+                        <div className="absolute top-1 right-1 w-1 h-1 bg-current rounded-full animate-ping" style={{ animationDelay: '0.1s' }} />
+                        <div className="absolute bottom-1 left-1 w-0.5 h-0.5 bg-current rounded-full animate-ping" style={{ animationDelay: '0.3s' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Row 2 - scrolls right */}
+              <div className="marquee-container">
+                <div className="marquee-track marquee-right">
+                  {[...techStack.slice().reverse(), ...techStack.slice().reverse()].map((tech, index) => (
+                    <div
+                      key={`r2-${index}`}
+                      className={`group/tech relative flex-shrink-0 w-16 h-16 bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-xl border border-white/30 dark:border-gray-600/30 flex items-center justify-center transition-all duration-300 hover:scale-125 hover:shadow-2xl hover:-translate-y-3 cursor-pointer overflow-visible mx-2 ${tech.color}`}
+                    >
+                      <div className="transform group-hover/tech:scale-110 transition-all duration-500 relative z-10">
+                        {tech.icon}
+                      </div>
+                      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-lg opacity-0 group-hover/tech:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-lg z-30 border border-gray-600/20">
+                        {tech.name}
+                      </div>
+                      <div className="absolute inset-0 rounded-xl opacity-0 group-hover/tech:opacity-60 transition-opacity duration-500 bg-gradient-to-br from-white/50 via-transparent to-transparent" />
                       <div className="absolute inset-0 opacity-0 group-hover/tech:opacity-100 transition-opacity duration-500">
                         <div className="absolute top-1 right-1 w-1 h-1 bg-current rounded-full animate-ping" style={{ animationDelay: '0.1s' }} />
                         <div className="absolute bottom-1 left-1 w-0.5 h-0.5 bg-current rounded-full animate-ping" style={{ animationDelay: '0.3s' }} />
@@ -733,6 +842,7 @@ const Hero = () => {
             </div>
           </div>
         </div>
+
       </section>
 
       <style jsx>{`
@@ -810,29 +920,43 @@ const Hero = () => {
           animation: flowing-tech 15s linear infinite;
         }
 
+        /* Marquee infinite scroll */
+        .marquee-container {
+          overflow: hidden;
+          position: relative;
+          width: 100%;
+          mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+          -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+          padding: 8px 0;
+        }
+        .marquee-track {
+          display: flex;
+          width: max-content;
+        }
+        .marquee-left {
+          animation: marquee-scroll-left 20s linear infinite;
+        }
+        .marquee-right {
+          animation: marquee-scroll-right 25s linear infinite;
+        }
+        .marquee-container:hover .marquee-left,
+        .marquee-container:hover .marquee-right {
+          animation-play-state: paused;
+        }
+        @keyframes marquee-scroll-left {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes marquee-scroll-right {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
+        }
+
         /* Grid for extended GitHub activity */
         .grid-cols-16 {
           grid-template-columns: repeat(16, minmax(0, 1fr));
         }
 
-        /* Custom scrollbar styling */
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.06);
-          border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-          background: linear-gradient(45deg, #ec4899, #a855f7);
-          border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(45deg, #db2777, #9333ea);
-        }
 
         /* Enhanced transitions */
         * {
@@ -905,6 +1029,39 @@ const Hero = () => {
         /* Shadow enhancements */
         .shadow-3xl {
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .marquee-container {
+          overflow: hidden;
+          width: 100%;
+          position: relative;
+        }
+        
+        .marquee-track {
+          display: flex;
+          width: max-content;
+        }
+
+        .marquee-left {
+          animation: marqueeLeft 30s linear infinite;
+        }
+
+        .marquee-right {
+          animation: marqueeRight 30s linear infinite;
+        }
+
+        .marquee-container:hover .marquee-track {
+          animation-play-state: paused;
+        }
+
+        @keyframes marqueeLeft {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+
+        @keyframes marqueeRight {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
         }
       `}</style>
     </>

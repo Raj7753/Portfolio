@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 
-const Header = ({ darkMode, setDarkMode }) => {
+const Header = ({ darkMode, setDarkMode, onContactOpen }) => {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
 
@@ -14,13 +14,16 @@ const Header = ({ darkMode, setDarkMode }) => {
 
   const navItems = [
     { name: 'Home', href: '/', isRoute: true },
-    { name: 'Skills', href: '/skills', isRoute: true },
+    { name: 'About', href: '/about', isRoute: true },
     { name: 'Projects', href: '/projects', isRoute: true },
+    { name: 'Contact', isModal: true },
   ];
 
   const handleNavigation = (e, item) => {
     e.preventDefault();
-    if (item.isRoute) {
+    if (item.isModal && onContactOpen) {
+      onContactOpen();
+    } else if (item.isRoute) {
       navigate(item.href);
     }
   };
@@ -36,14 +39,24 @@ const Header = ({ darkMode, setDarkMode }) => {
               {/* Navigation Items */}
               <nav className="flex items-center gap-4 md:gap-6">
                 {navItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={(e) => handleNavigation(e, item)}
-                    className="text-textLight dark:text-textDark hover:text-primaryLight dark:hover:text-primaryDark transition-colors duration-300 font-medium text-xs md:text-sm px-2 py-1 rounded-md hover:bg-white/5 dark:hover:bg-black/5 relative z-[100]"
-                  >
-                    {item.name}
-                  </Link>
+                  item.isModal ? (
+                    <button
+                      key={item.name}
+                      onClick={(e) => handleNavigation(e, item)}
+                      className="text-textLight dark:text-textDark hover:text-primaryLight dark:hover:text-primaryDark transition-colors duration-300 font-medium text-xs md:text-sm px-3 py-1.5 rounded-full bg-white/5 dark:bg-white/5 hover:bg-white/15 dark:hover:bg-white/10 border border-white/10 dark:border-white/10 relative z-[100]"
+                    >
+                      {item.name}
+                    </button>
+                  ) : (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={(e) => handleNavigation(e, item)}
+                      className="text-textLight dark:text-textDark hover:text-primaryLight dark:hover:text-primaryDark transition-colors duration-300 font-medium text-xs md:text-sm px-2 py-1 rounded-md hover:bg-white/5 dark:hover:bg-black/5 relative z-[100]"
+                    >
+                      {item.name}
+                    </Link>
+                  )
                 ))}
               </nav>
 

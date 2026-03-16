@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import Skills from './components/Skills';
+import About from './components/About';
 import Projects from './components/Projects';
-// import Footer from './components/Footer';
+import Contact from './components/Contact';
+import Footer from './components/Footer';
 
-// HomePage renders Hero section (Profile)
+// HomePage renders Hero section only
 const HomePage = () => {
   const location = useLocation();
 
@@ -24,6 +25,7 @@ const HomePage = () => {
 };
 
 function App() {
+  const [contactOpen, setContactOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
     if (savedMode !== null) return savedMode === 'true';
@@ -31,6 +33,10 @@ function App() {
   });
 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef(null);
+  const trailRef = useRef([]);
+  const hueRef = useRef(0);
+  const animFrameRef = useRef(null);
 
   // Apply dark mode and handle cursor
   useEffect(() => {
@@ -59,62 +65,139 @@ function App() {
     };
   }, [darkMode]);
 
+  // Colorful cursor trail effect (canvas-based, no dot)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const handleMove = (e) => {
+      hueRef.current = (hueRef.current + 2) % 360;
+      trailRef.current.push({
+        x: e.clientX,
+        y: e.clientY,
+        hue: hueRef.current,
+        life: 1,
+        size: 6 + Math.random() * 4,
+      });
+      if (trailRef.current.length > 50) trailRef.current.shift();
+    };
+    window.addEventListener('mousemove', handleMove);
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const trail = trailRef.current;
+      for (let i = trail.length - 1; i >= 0; i--) {
+        const p = trail[i];
+        p.life -= 0.025;
+        if (p.life <= 0) {
+          trail.splice(i, 1);
+          continue;
+        }
+        const alpha = p.life * 0.6;
+        const size = p.size * p.life;
+        // Glow
+        ctx.beginPath();
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 2);
+        grad.addColorStop(0, `hsla(${p.hue}, 100%, 65%, ${alpha})`);
+        grad.addColorStop(0.4, `hsla(${p.hue + 30}, 100%, 55%, ${alpha * 0.5})`);
+        grad.addColorStop(1, `hsla(${p.hue + 60}, 100%, 50%, 0)`);
+        ctx.fillStyle = grad;
+        ctx.arc(p.x, p.y, size * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw connecting lines between recent points
+      if (trail.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(trail[0].x, trail[0].y);
+        for (let i = 1; i < trail.length; i++) {
+          const p = trail[i];
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = `hsla(${hueRef.current}, 100%, 65%, 0.15)`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      animFrameRef.current = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', handleMove);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, []);
+
   return (
     <Router>
-      {/* Dark Orange Background Light Effect */}
+      {/* Grayscale Background Glow Effect */}
       <div 
         className="fixed inset-0 pointer-events-none z-0 transition-all duration-300 ease-out"
         style={{
           background: `
             radial-gradient(
               800px circle at ${mousePosition.x}px ${mousePosition.y}px,
-              ${darkMode ? 'rgba(255, 140, 0, 0.12)' : 'rgba(255, 140, 0, 0.08)'} 0%,
+              ${darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)'} 0%,
               transparent 70%
             )
           `,
         }}
       />
 
-      {/* Additional Orange Gradient Layers for Richer Effect */}
+      {/* Additional Glow Layers for Richer Effect */}
       <div 
         className="fixed inset-0 pointer-events-none z-0 transition-all duration-500 ease-out"
         style={{
           background: `
             radial-gradient(
               1200px circle at ${mousePosition.x * 0.7}px ${mousePosition.y * 0.7}px,
-              ${darkMode ? 'rgba(255, 165, 0, 0.06)' : 'rgba(255, 165, 0, 0.04)'} 0%,
+              ${darkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'} 0%,
               transparent 60%
             )
           `,
         }}
       />
 
-      {/* Third Layer for More Depth */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0 transition-all duration-700 ease-out"
+      {/* Custom Cursor Ring (no dot) */}
+      <div
+        className="fixed top-0 left-0 w-8 h-8 border-[1.5px] border-gray-500 rounded-full pointer-events-none z-[9999] transition-transform duration-150 ease-out hidden md:block mix-blend-difference"
         style={{
-          background: `
-            radial-gradient(
-              1600px circle at ${mousePosition.x * 0.5}px ${mousePosition.y * 0.5}px,
-              ${darkMode ? 'rgba(255, 69, 0, 0.04)' : 'rgba(255, 69, 0, 0.02)'} 0%,
-              transparent 50%
-            )
-          `,
+          transform: `translate3d(${mousePosition.x - 16}px, ${mousePosition.y - 16}px, 0)`,
         }}
       />
 
+      {/* Colorful cursor trail canvas */}
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 pointer-events-none z-[9998] hidden md:block"
+        style={{ mixBlendMode: 'screen' }}
+      />
+
       <div className="min-h-screen bg-backgroundLight text-textLight dark:bg-backgroundDark dark:text-textDark transition-[background-color,color] duration-500 ease-in-out relative z-10">
-        <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+        <Header darkMode={darkMode} setDarkMode={setDarkMode} onContactOpen={() => setContactOpen(true)} />
         
         <main className="transition-all duration-500 ease-in-out">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/skills" element={<Skills />} />
+            <Route path="/about" element={<About />} />
             <Route path="/projects" element={<Projects />} />
           </Routes>
         </main>
         
-        {/* <Footer /> */}
+        {/* Contact Bottom-Sheet Modal */}
+        <Contact isOpen={contactOpen} onClose={() => setContactOpen(false)} />
+
+        <Footer />
       </div>
 
       <style jsx>{`
@@ -132,35 +215,18 @@ function App() {
           scroll-behavior: smooth;
         }
 
-        /* Custom scrollbar with orange accent */
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-          background: ${darkMode ? 'rgba(255, 140, 0, 0.3)' : 'rgba(255, 140, 0, 0.2)'};
-          border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: ${darkMode ? 'rgba(255, 140, 0, 0.5)' : 'rgba(255, 140, 0, 0.4)'};
-        }
 
         /* Smooth transitions for interactive elements */
         button, a {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Enhanced hover effects with orange accent */
+        /* Enhanced hover effects with grayscale accent */
         button:hover, a:hover {
           transform: translateY(-1px);
         }
 
-        /* Orange glow effect for primary buttons */
+        /* Grayscale glow effect for primary buttons */
         .bg-primaryLight, .bg-primaryDark {
           position: relative;
           overflow: hidden;
@@ -191,27 +257,27 @@ function App() {
           }
         }
 
-        /* Orange text shadow for headings */
+        /* Grayscale text shadow for headings */
         h1, h2, h3, h4, h5, h6 {
           transition: text-shadow 0.3s ease;
         }
 
         h1:hover, h2:hover, h3:hover {
           text-shadow: ${darkMode ? 
-            '0 0 10px rgba(255, 140, 0, 0.3)' : 
-            '0 0 5px rgba(255, 140, 0, 0.2)'
+            '0 0 10px rgba(255, 255, 255, 0.3)' : 
+            '0 0 5px rgba(0, 0, 0, 0.2)'
           };
         }
 
-        /* Orange border glow effect */
+        /* Grayscale border glow effect */
         .border-primaryLight, .border-primaryDark {
           transition: box-shadow 0.3s ease;
         }
 
         .border-primaryLight:hover, .border-primaryDark:hover {
           box-shadow: ${darkMode ? 
-            '0 0 15px rgba(255, 140, 0, 0.3)' : 
-            '0 0 10px rgba(255, 140, 0, 0.2)'
+            '0 0 15px rgba(255, 255, 255, 0.3)' : 
+            '0 0 10px rgba(0, 0, 0, 0.2)'
           };
         }
       `}</style>

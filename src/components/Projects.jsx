@@ -1,17 +1,31 @@
-// src/components/Projects.jsx
 import { FiGithub } from 'react-icons/fi';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import biterush from '../assets/biterush.mp4';
 
 const Projects = () => {
   const projects = useMemo(
     () => [
       {
+        title: 'PingTrack (PingAlert)',
+        description: 'A website monitoring and alerting platform ensuring high availability and uptime reliability.',
+        tags: ['React', 'Node.js', 'MongoDB', 'Alerting'],
+        github: 'https://github.com/Raash-03',
+        liveUrl: '#',
+        thumbnail: '/thumbnails/pingalert-thumb.jpg',
+      },
+      {
+        title: 'CodeR',
+        description: 'A coding platform featuring secure authentication systems and environments for developers.',
+        tags: ['React', 'Authentication', 'API', 'UI/UX'],
+        github: 'https://github.com/Raash-03',
+        liveUrl: '#',
+        thumbnail: '/thumbnails/coder-thumb.jpg',
+      },
+      {
         title: 'BITE RUSH - Food Ordering Web App',
         description: 'A full-stack food ordering website with product listings, cart functionality, and secure checkout.',
         tags: ['React', 'Node.js', 'MongoDB', 'Stripe'],
         github: 'https://github.com',
-        media: biterush,
+        liveUrl: 'https://biterush-e5jv.onrender.com/',
         thumbnail: '/thumbnails/ecommerce-thumb.jpg',
       },
       {
@@ -19,7 +33,7 @@ const Projects = () => {
         description: 'A productivity application for managing tasks with drag-and-drop functionality and team collaboration.',
         tags: ['React', 'Firebase', 'Tailwind CSS'],
         github: 'https://github.com',
-        media: biterush,
+        liveUrl: '#',
         thumbnail: '/thumbnails/taskapp-thumb.jpg',
       },
       {
@@ -27,7 +41,7 @@ const Projects = () => {
         description: 'Real-time weather application with 5-day forecasts and location-based weather data.',
         tags: ['JavaScript', 'API', 'CSS'],
         github: 'https://github.com',
-        media: biterush,
+        liveUrl: '#', // Added liveUrl as per instruction
         thumbnail: '/thumbnails/weather-thumb.jpg',
       },
       {
@@ -35,7 +49,7 @@ const Projects = () => {
         description: 'A social networking platform with real-time messaging, posts, and user interactions.',
         tags: ['React', 'Socket.io', 'MongoDB', 'Express'],
         github: 'https://github.com',
-        media: biterush,
+        liveUrl: '#',
         thumbnail: '/thumbnails/social-thumb.jpg',
       },
       {
@@ -43,15 +57,13 @@ const Projects = () => {
         description: 'A responsive portfolio website showcasing projects and skills with modern design.',
         tags: ['React', 'Tailwind CSS', 'Framer Motion'],
         github: 'https://github.com',
-        media: biterush,
+        liveUrl: '#',
         thumbnail: '/thumbnails/portfolio-thumb.jpg',
       },
     ],
     []
   );
-
   const carouselRef = useRef(null);
-  const videoRefs = useRef([]);
   const mouseRef = useRef({ x: 0, y: 0 });
   const animationFrameRef = useRef(null);
   const sectionRef = useRef(null);
@@ -62,13 +74,10 @@ const Projects = () => {
   const [scrollLeft, setScrollLeft] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
-  const [footerMousePosition, setFooterMousePosition] = useState({ x: 0, y: 0 });
-  const [isFooterHovering, setIsFooterHovering] = useState(false);
-  const footerRef = useRef(null);
   
   // Add scroll throttle to prevent too rapid scrolling
   const lastScrollTime = useRef(0);
-  const scrollThrottleDelay = 500; // milliseconds between scroll actions
+  const scrollThrottleDelay = 500;
   const autoPlayIntervalRef = useRef(null);
   const keyDownTimeoutRef = useRef(null);
 
@@ -118,85 +127,15 @@ const Projects = () => {
     setTimeout(() => setIsAutoPlaying(true), 2000);
   }, []);
 
-  // Footer mouse tracking
-  const handleFooterMouseMove = useCallback((e) => {
-    if (!footerRef.current) return;
-    
-    const rect = footerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Throttle mouse position updates for performance
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-    
-    animationFrameRef.current = requestAnimationFrame(() => {
-      setFooterMousePosition({ x, y });
-    });
-  }, []);
+  // Memoize particles to prevent re-renders
+  const particles = useMemo(() => 
+    [...Array(6)].map((_, i) => ({
+      left: `${15 + i * 15}%`,
+      top: `${10 + (i * 17) % 80}%`,
+      delay: i * 0.5,
+      duration: 3 + i,
+    })), []);
 
-  const handleFooterMouseEnter = useCallback(() => {
-    setIsFooterHovering(true);
-  }, []);
-
-  const handleFooterMouseLeave = useCallback(() => {
-    setIsFooterHovering(false);
-  }, []);
-
-  // Optimized video management with error handling
-  useEffect(() => {
-    const playPromises = [];
-    
-    videoRefs.current.forEach((video, index) => {
-      if (!video) return;
-      
-      try {
-        const isActive = visibleProjects.some(proj => 
-          proj.projIndex === index && Math.abs(proj.position) <= 1
-        );
-        
-        if (isActive) {
-          const shouldPlay = visibleProjects.some(proj => 
-            proj.projIndex === index && proj.position === 0
-          );
-          
-          if (shouldPlay) {
-            if (video.paused) {
-              video.currentTime = 0;
-              const playPromise = video.play();
-              if (playPromise !== undefined) {
-                playPromises.push(
-                  playPromise.catch((err) => {
-                    console.warn('Video play failed:', err);
-                  })
-                );
-              }
-            }
-          } else {
-            video.pause();
-            video.currentTime = 0;
-          }
-        } else {
-          video.pause();
-          video.currentTime = 0;
-        }
-      } catch (err) {
-        console.warn('Video management error:', err);
-      }
-    });
-
-    return () => {
-      // Wait for all play promises to resolve/reject before cleanup
-      Promise.allSettled(playPromises).then(() => {
-        videoRefs.current.forEach(video => {
-          if (video && !video.paused) {
-            video.pause();
-          }
-        });
-      });
-    };
-  }, [visibleProjects]);
 
   // Fixed auto-play effect with proper cleanup
   useEffect(() => {
@@ -316,7 +255,7 @@ const Projects = () => {
 
   // Optimized ProjectCard component
   const ProjectCard = useCallback(({ projectData, activeSlide }) => {
-    const { position, projIndex, title, description, tags, media, thumbnail, github } = projectData;
+    const { position, projIndex, title, description, tags, thumbnail, github, liveUrl } = projectData;
 
     const scale = Math.max(0.7, 1 - Math.abs(position) * 0.15);
     const opacity = Math.max(0.3, 1 - Math.abs(position) * 0.3);
@@ -336,61 +275,56 @@ const Projects = () => {
         }}
         onClick={() => !activeSlide && setCurrentIndex(projIndex)}
       >
-        <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
-          <video
-            ref={(el) => {
-              if (el) {
-                videoRefs.current[projIndex] = el;
-              }
+        <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 group">
+          {/* Animated gradient placeholder background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 group-hover:from-indigo-500/30 group-hover:via-purple-500/30 group-hover:to-pink-500/30 transition-all duration-500"></div>
+          <img
+            src={thumbnail}
+            alt={title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            draggable={false}
+            onError={(e) => {
+              // Fallback if thumbnail doesn't exist
+              e.target.style.display = 'none';
             }}
-            className="absolute inset-0 w-full h-full object-cover"
-            muted
-            loop
-            playsInline
-            preload="auto"
-            poster={thumbnail}
-            onLoadedData={() => {
-              // Ensure video is ready to play
-              const video = videoRefs.current[projIndex];
-              if (video && projIndex === currentIndex) {
-                video.play().catch(() => {});
-              }
-            }}
-            onError={(e) => console.warn('Video error:', e)}
-            style={{ 
-              visibility: 'visible',
-              opacity: 1,
-              zIndex: 1
-            }}
-          >
-            <source src={media} type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative z-10 flex flex-col h-full justify-end p-4 text-white">
-            <div className="mb-2">
-              <h3 className="text-xl md:text-2xl font-bold mb-1">{title}</h3>
-              <p className="text-xs md:text-sm mb-2 line-clamp-2">{description}</p>
-              <div className="flex flex-wrap gap-1 md:gap-2">
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="relative z-10 flex flex-col h-full justify-end p-6 text-white">
+            <div className="mb-4">
+              <h3 className="text-2xl md:text-3xl font-bold mb-2 text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{title}</h3>
+              <p className="text-sm md:text-base mb-4 line-clamp-2 text-gray-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] font-medium">{description}</p>
+              <div className="flex flex-wrap gap-2 md:gap-3">
                 {tags.map((tag, idx) => (
                   <span
                     key={`${projIndex}-${idx}`}
-                    className="px-2 py-1 bg-white/20 rounded-full text-xs font-medium"
+                    className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold text-white shadow-sm border border-white/10"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="flex space-x-3 pt-1">
+            <div className="flex space-x-4 pt-2">
               <a
                 href={github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30 transition backdrop-blur-sm"
+                className="flex items-center justify-center px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-full text-sm font-bold transition-all duration-300 backdrop-blur-md shadow-lg border border-white/20 hover:scale-105"
                 onClick={(e) => e.stopPropagation()}
               >
                 <FiGithub className="mr-2" /> Code
               </a>
+              {liveUrl && (
+                <a
+                  href={liveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center px-5 py-2.5 bg-pink-600 text-white rounded-full text-sm font-bold hover:bg-pink-500 transition-all duration-300 backdrop-blur-md shadow-[0_0_15px_rgba(236,72,153,0.6)] hover:shadow-[0_0_25px_rgba(236,72,153,0.8)] border border-pink-400/50 hover:scale-105"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Go Live
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -398,54 +332,7 @@ const Projects = () => {
     );
   }, [currentIndex]);
 
-  // Social links data
-  const socialLinks = [
-    {
-      name: 'GitHub',
-      url: 'https://github.com/yourusername',
-      icon: (
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          className="w-6 h-6"
-        >
-          <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-        </svg>
-      ),
-    },
-    {
-      name: 'LinkedIn',
-      url: 'https://linkedin.com/in/yourusername',
-      icon: (
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          className="w-6 h-6"
-        >
-          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-        </svg>
-      ),
-    },
-    {
-      name: 'Email',
-      url: 'mailto:your.email@example.com',
-      icon: (
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          className="w-6 h-6"
-        >
-          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-        </svg>
-      ),
-    },
-  ];
+
 
   return (
     <>
@@ -510,15 +397,15 @@ const Projects = () => {
 
         {/* Ambient background particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(6)].map((_, i) => (
+          {particles.map((p, i) => (
             <div
               key={`particle-${i}`}
               className="absolute w-1 h-1 bg-pink-400 dark:bg-purple-400 rounded-full opacity-30"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `float ${3 + i}s ease-in-out infinite alternate`,
-                animationDelay: `${i * 0.5}s`,
+                left: p.left,
+                top: p.top,
+                animation: `float ${p.duration}s ease-in-out infinite alternate`,
+                animationDelay: `${p.delay}s`,
               }}
             />
           ))}
@@ -571,117 +458,6 @@ const Projects = () => {
         </div>
       </section>
 
-      {/* Footer Section */}
-<footer
-  ref={footerRef}
-  className="relative bg-transparent py-32 overflow-hidden mt-16"
-  onMouseMove={handleFooterMouseMove}
-  onMouseEnter={handleFooterMouseEnter}
-  onMouseLeave={handleFooterMouseLeave}
->
-  {/* Footer Light Effects */}
-  {isFooterHovering && (
-    <>
-      {/* Main cursor light */}
-      <div
-        className="pointer-events-none absolute z-10 rounded-full transition-opacity duration-300"
-        style={{
-          left: footerMousePosition.x - 200,
-          top: footerMousePosition.y - 200,
-          width: '400px',
-          height: '400px',
-          background: 'radial-gradient(circle, rgba(219, 39, 119, 0.12) 0%, rgba(147, 51, 234, 0.08) 50%, transparent 70%)',
-          filter: 'blur(25px)',
-          opacity: isFooterHovering ? 1 : 0,
-        }}
-      />
-      
-      {/* Secondary light ring */}
-      <div
-        className="pointer-events-none absolute z-20 rounded-full transition-all duration-500"
-        style={{
-          left: footerMousePosition.x - 120,
-          top: footerMousePosition.y - 120,
-          width: '240px',
-          height: '240px',
-          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, rgba(168, 85, 247, 0.1) 40%, transparent 60%)',
-          filter: 'blur(20px)',
-          opacity: isFooterHovering ? 0.7 : 0,
-          transform: `scale(${1 + Math.sin(Date.now() * 0.003) * 0.1})`,
-        }}
-      />
-      
-      {/* Small inner glow */}
-      <div
-        className="pointer-events-none absolute z-30 rounded-full transition-opacity duration-200"
-        style={{
-          left: footerMousePosition.x - 40,
-          top: footerMousePosition.y - 40,
-          width: '80px',
-          height: '80px',
-          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(219, 39, 119, 0.3) 30%, transparent 60%)',
-          filter: 'blur(8px)',
-          opacity: isFooterHovering ? 0.8 : 0,
-        }}
-      />
-    </>
-  )}
-
-  {/* Ambient background particles */}
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(8)].map((_, i) => (
-      <div
-        key={`footer-particle-${i}`}
-        className="absolute w-1 h-1 bg-pink-400 dark:bg-purple-400 rounded-full opacity-20"
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-          animation: `footerFloat ${4 + i * 0.5}s ease-in-out infinite alternate`,
-          animationDelay: `${i * 0.3}s`,
-        }}
-      />
-    ))}
-  </div>
-
-  <div className="container mx-auto px-4 relative z-40">
-    {/* Social Links */}
-    <div className="flex justify-center space-x-8 mb-8">
-      {socialLinks.map((link) => (
-        <a
-          key={link.name}
-          href={link.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group relative p-4 rounded-full bg-white/10 dark:bg-black/10 backdrop-blur-sm shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-110 hover:rotate-6 border border-white/20 dark:border-gray-700/50"
-        >
-          {/* Icon glow effect */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-500/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
-          <div className="relative text-gray-700 dark:text-gray-300 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors duration-300">
-            {link.icon}
-          </div>
-          
-          {/* Tooltip */}
-          <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-800 dark:bg-white text-white dark:text-gray-800 px-3 py-1 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-            {link.name}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800 dark:border-t-white" />
-          </div>
-          
-          {/* Ripple effect */}
-          <div className="absolute inset-0 rounded-full border-2 border-pink-500/30 scale-0 group-hover:scale-150 opacity-100 group-hover:opacity-0 transition-all duration-500" />
-        </a>
-      ))}
-    </div>
-
-    {/* Copyright */}
-    <div className="text-center">
-      <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-        © {new Date().getFullYear()} Raj. All rights reserved.
-      </p>
-    </div>
-  </div>
-</footer>
-
       {/* CSS Styles */}
       <style jsx>{`
         .line-clamp-2 {
@@ -712,17 +488,7 @@ const Projects = () => {
           }
         }
         
-        /* Footer floating animation */
-        @keyframes footerFloat {
-          0% {
-            transform: translateY(0px) rotate(0deg) scale(1);
-            opacity: 0.2;
-          }
-          100% {
-            transform: translateY(-15px) rotate(180deg) scale(1.1);
-            opacity: 0.4;
-          }
-        }
+
         
         /* Enhanced glow effect for active dot */
         .shadow-pink-500\\/50 {

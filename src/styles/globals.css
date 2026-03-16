@@ -10,22 +10,7 @@ body {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
 
-::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-800;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-indigo-400 dark:bg-indigo-600 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-indigo-500 dark:bg-indigo-500;
-}
 html {
   transition: background-color 0.5s, color 0.5s;
 }
