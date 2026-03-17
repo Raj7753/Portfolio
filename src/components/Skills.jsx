@@ -2,45 +2,16 @@ import React, { useState, useEffect } from 'react';
 
 const SkillsAndFooter = () => {
   const [hoveredSkill, setHoveredSkill] = useState(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
 
   const [cursorGlow, setCursorGlow] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
       setCursorGlow({ 
         x: (e.clientX / window.innerWidth) * 100, 
         y: (e.clientY / window.innerHeight) * 100 
-      },
-    { 
-      name: 'GitHub', 
-      icon: (
-        <svg viewBox="0 0 24 24" className="w-8 h-8">
-          <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" fill="#181717"/>
-        </svg>
-      )
-    },
-    { 
-      name: 'FastAPI', 
-      icon: (
-        <svg viewBox="0 0 24 24" className="w-8 h-8">
-          <path d="M12 0C5.375 0 0 5.375 0 12s5.375 12 12 12 12-5.375 12-12S18.625 0 12 0zm-1.444 6.111h2.888L12 8.556 10.556 6.11zm3.111 8.445L12 16.444l-1.667-1.888h3.334zM8.556 12L12 8.556 15.444 12 12 15.444 8.556 12z" fill="#009688"/>
-          <circle cx="12" cy="12" r="4" fill="none" stroke="#009688" strokeWidth="1"/>
-        </svg>
-      )
-    },
-    { 
-      name: 'Firebase', 
-      icon: (
-        <svg viewBox="0 0 24 24" className="w-8 h-8">
-          <path d="M5.016 18.573l1.95-12.144L8.85 9.214l-3.834 9.359z" fill="#FFA000"/>
-          <path d="M14.103 3.574L8.85 9.214l-1.884-2.785 1.85-3.398c.39-.719 1.415-.719 1.805 0l3.482 6.362z" fill="#F57C00"/>
-          <path d="M14.103 15.788L8.85 9.214l5.253 6.574 4.216-2.375c.69-.387.69-1.36 0-1.748l-4.216-2.375z" fill="#FFCA28"/>
-          <path d="M5.016 18.573l8.087-4.785L8.85 9.214l-3.834 9.359z" fill="#FFC107"/>
-        </svg>
-      )
-    });
+      });
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -272,15 +243,6 @@ const SkillsAndFooter = () => {
     }
   ];
 
-  const getWindowDimensions = () => {
-    if (typeof window !== 'undefined') {
-      return {
-        width: window.innerWidth,
-        height: window.innerHeight
-      };
-    }
-    return { width: 1920, height: 1080 };
-  };
 
   const getSkillColor = (skillName) => {
     const colorMap = {
@@ -455,7 +417,6 @@ const SkillsAndFooter = () => {
           {/* Original Skills Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-24">
             {skills.map((skill, index) => {
-              const dimensions = getWindowDimensions();
               return (
                 <div
                   key={skill.name}
