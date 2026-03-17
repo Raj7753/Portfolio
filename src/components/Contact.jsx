@@ -16,7 +16,7 @@ const Contact = ({ isOpen, onClose }) => {
       const t = setTimeout(() => setAnimState('closed'), 400);
       return () => clearTimeout(t);
     }
-  }, [isOpen]);
+  }, [isOpen, animState]);
 
   useEffect(() => {
     if (isOpen) {

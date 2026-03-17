@@ -1,16 +1,8 @@
-import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 
 const Header = ({ darkMode, setDarkMode, onContactOpen }) => {
-  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const navItems = [
     { name: 'Home', href: '/', isRoute: true },

@@ -221,7 +221,6 @@ const Projects = () => {
     }
     lastScrollTime.current = now;
     
-    const sensitivity = 0.3; // Reduced sensitivity
     let direction = 0;
     
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
@@ -330,7 +329,7 @@ const Projects = () => {
         </div>
       </div>
     );
-  }, [currentIndex]);
+  }, []);
 
 
 
